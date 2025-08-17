@@ -1,0 +1,65 @@
+---
+title: "Market Basket Analysis for Retail Transactions"
+author: "JoWinatha96"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(dplyr)
+library(tidyr)
+library(lubridate)
+library(arules)
+library(arulesViz)
+library(kableExtra)
+set.seed(42)
+```
+
+## 1. Simulate Customer Master Data
+
+```{r}
+n_customers <- 120
+customer_master <- tibble(
+  customer_id = sprintf("C%03d", 1:n_customers),
+  customer_name = paste0("Customer_", 1:n_customers),
+  member = sample(c(TRUE, FALSE), n_customers, replace = TRUE, prob = c(0.7, 0.3))
+)
+head(customer_master)
+```
+
+## 2. Simulate Item Master Data
+
+```{r}
+item_list <- c(
+  "Cordless Drill", "Hammer", "Screwdriver Set", "Paint Brush", "Extension Cord",
+  "LED Bulb", "Door Lock", "Toolbox", "Plunger", "Garden Hose", "Tape Measure",
+  "Flashlight", "Smoke Detector", "Electric Fan", "Batteries", "Lawn Mower",
+  "Wrench Set", "Saw", "Shovel", "Pliers"
+)
+n_items <- length(item_list)
+item_master <- tibble(
+  item_id = sprintf("I%03d", 1:n_items),
+  item_name = item_list
+)
+head(item_master)
+```
+
+## 3. Simulate Transaction Data (with Items per Transaction)
+
+```{r}
+n_transactions <- 2000
+transaction_data <- tibble(
+  transaction_id = sprintf("T%05d", 1:n_transactions),
+  customer_id = sample(customer_master$customer_id, n_transactions, replace = TRUE),
+  transaction_date = sample(seq(as.Date("2025-01-01"), as.Date("2025-07-31"), by="day"), n_transactions, replace = TRUE)
+)
+
+# Each transaction contains 1-5 items randomly
+transaction_items <- transaction_data %>%
+  mutate(
+    n_items = sample(1:5, n_transactions, replace = TRUE)
+  ) %>%
+  rowwise() %>%
+  mutate(
+    item_ids = list(sample(item_master$item_id, n
