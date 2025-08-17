@@ -14,12 +14,12 @@ Ensuring data reliability, scalability, and security in cloud and on-premise env
 I am passionate about leveraging modern data architectures to solve complex problems and deliver actionable insights for business growth.
 
 ## Skills
-- **Languages:** Python, R, SQL
+- **Languages:** Python, R, SQL, Java
 - **Databases:** MySQL, Dremio
 - **Cloud:** AWS
-- **Data Engineering:** ETL, Data Pipelines
+- **Data Engineering:** ETL, Data Pipelines, Load Balancing
 - **Data Science:** Forecasting, ML (scikit-learn, pandas), Data Visualization
-- **Tools:** Git, Jupyter, Tableau
+- **Tools:** Git, Jupyter, Dataiku, Dremio, MinIO
 
 ## Projects
 
