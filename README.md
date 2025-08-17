@@ -1,7 +1,7 @@
 # JoWinatha's Data Portfolio
 
 ## About Me
-I am a data engineering professional specializing in building robust ETL pipelines for diverse data types, including image processing and PI Sensor data streams. My expertise lies in designing and implementing scalable solutions that extract, transform, and load (ETL) large volumes of structured and unstructured data, ensuring high data quality and accessibility.
+I am a data engineering with more than 5 years of experience specializing in building robust ETL pipelines for diverse data types and sources, including image processing and PI Sensor data streams. My expertise lies in designing and implementing scalable solutions that extract, transform, and load (ETL) large volumes of structured and unstructured data, ensuring high data quality and accessibility.
 
 With hands-on experience in integrating multiple data sources into enterprise-grade data lakes, I leverage Dremio for high-performance analytics and MinIO for scalable, secure object storage. My work enables organizations to seamlessly unify and analyze data from disparate sources, empowering advanced analytics and informed decision-making.
 
@@ -14,8 +14,7 @@ Ensuring data reliability, scalability, and security in cloud and on-premise env
 I am passionate about leveraging modern data architectures to solve complex problems and deliver actionable insights for business growth.
 
 ## Skills
-- **Languages:** Python, R, SQL, Java
-- **Databases:** MySQL, Dremio
+- **Languages:** Python, R, SQL, MySQL, Java
 - **Cloud:** AWS
 - **Data Engineering:** ETL, Data Pipelines, Load Balancing
 - **Data Science:** Forecasting, ML (scikit-learn, pandas), Data Visualization
@@ -23,31 +22,33 @@ I am passionate about leveraging modern data architectures to solve complex prob
 
 ## Projects
 
-### [Retail Sales Forecasting](#)
-- **Tools:** Python, scikit-learn, MySQL
-- Built a model that improved weekly sales predictions, reducing overstock by 15%.
+### [Retail Customer Segmentation](#)
+- **Tools:** R, SQL, PowerBI
+- Built an exploratory data analysis for customer segmentation based on Recency, Frequency and Monetary values.
 
 ### [Membership Churn Prediction](#)
 - **Tools:** R, pandas, matplotlib
-- Created a churn model that identified at-risk members with 80% accuracy.
+- Created a churn model that identified at-risk members with 85% accuracy.
 
-### [Inventory Optimization Pipeline](#)
-- **Tools:** Python, AWS Lambda, Dremio
-- Automated ETL and optimized inventory levels across 50 stores.
+### [Inventory and Shelf Optimization Pipeline](#)
+- **Tools:** R, AWS Lambda
+- Automated ETL and optimized inventory placement in 100+ stores.
+
 
 ## Experience
 
-**Data Analyst & Engineer, Retail Company (2019–2024)**
-- Built and maintained data pipelines and dashboards for sales and inventory.
+**Data Analyst & Engineer, ACE Hardware Indonesia (2019–2021)**
+- Built and maintained data pipelines and dashboards for membership, sales and inventory.
 - Deployed predictive models for operational efficiency.
 - Collaborated remotely with cross-functional teams.
 
-## Education & Certifications
-- Bachelor’s in [Your Major]
-- AWS Certified Solutions Architect (if applicable)
-- Data Science Specialization (Coursera, etc.)
+
+**Data Engineer, Sinarmas APP (2021– Now)**
+- Built and maintained data pipelines and dashboards for image processing in forestry sector.
+- Deployed ETL pipelines for various data sources into various data destination using python.
+- Migrating data from SAP into datalake by using Dremio, MinIO and Dataiku.
 
 ## Contact
-- **Email:** [your.email@example.com]
-- **LinkedIn:** [Your LinkedIn]
-- **GitHub:** [Your GitHub]
+- **Email:** joshuawinatha@gmail.com
+- **LinkedIn:** linkedin.com/in/joshuawinatha
+- **GitHub:** github.com/JoWinatha96
