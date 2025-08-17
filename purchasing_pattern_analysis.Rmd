@@ -1,0 +1,154 @@
+---
+title: "Customer Purchasing Pattern Analysis"
+author: "JoWinatha96"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(dplyr)
+library(lubridate)
+library(ggplot2)
+library(tidyr)
+library(kableExtra)
+set.seed(123)
+```
+
+## 1. Simulate Customer Master Data
+
+```{r}
+# Simulate 100 customers
+n_customers <- 100
+customer_master <- tibble(
+  customer_id = sprintf("C%03d", 1:n_customers),
+  customer_name = paste0("Customer_", 1:n_customers),
+  member = sample(c(TRUE, FALSE), n_customers, replace = TRUE, prob = c(0.7, 0.3))
+)
+
+head(customer_master)
+```
+
+## 2. Simulate Transaction Data
+
+```{r}
+# Simulate transactions for 1 year
+n_transactions <- 1500
+transaction_data <- tibble(
+  transaction_id = sprintf("T%05d", 1:n_transactions),
+  customer_id = sample(customer_master$customer_id, n_transactions, replace = TRUE),
+  transaction_date = sample(seq(as.Date("2025-01-01"), as.Date("2025-07-31"), by="day"), n_transactions, replace = TRUE),
+  amount = round(runif(n_transactions, 50, 500), 2)
+)
+
+head(transaction_data)
+```
+
+## 3. Filter Member Transactions
+
+```{r}
+# Join and filter for members
+member_transactions <- transaction_data %>%
+  inner_join(customer_master %>% filter(member == TRUE), by = "customer_id")
+
+member_transactions %>% head()
+```
+
+## 4. Calculate RFM Metrics (Recency, Frequency, Monetary)
+
+```{r}
+# Today's date for recency calculation
+analysis_date <- as.Date("2025-08-01")
+
+rfm_table <- member_transactions %>%
+  group_by(customer_id) %>%
+  summarise(
+    frequency = n_distinct(transaction_date %/% months(1)), # times in a month
+    recent_date = max(transaction_date),
+    recency = as.numeric(analysis_date - recent_date), # days since last purchase
+    monetary = sum(amount)
+  ) %>%
+  left_join(customer_master, by = "customer_id") %>%
+  arrange(desc(monetary))
+
+rfm_table %>% kable() %>% kable_styling()
+```
+
+## 5. Exploratory Data Analysis
+
+```{r}
+# Frequency distribution
+ggplot(rfm_table, aes(x = frequency)) +
+  geom_histogram(binwidth=1, fill="#4e79a7", color="white") +
+  labs(title="Frequency of Purchases per Member", x="Purchases per Month", y="Count")
+
+# Recency distribution
+ggplot(rfm_table, aes(x = recency)) +
+  geom_histogram(binwidth=10, fill="#f28e2b", color="white") +
+  labs(title="Recency (Days Since Last Purchase)", x="Days", y="Count")
+
+# Monetary distribution
+ggplot(rfm_table, aes(x = monetary)) +
+  geom_histogram(binwidth=200, fill="#59a14f", color="white") +
+  labs(title="Total Value Bought", x="Total Amount", y="Count")
+```
+
+## 6. Customer Segmentation
+
+```{r}
+# Quantile-based segmentation
+rfm_table <- rfm_table %>%
+  mutate(
+    freq_segment = ntile(frequency, 3),
+    rec_segment = ntile(-recency, 3),  # Lower recency = more recent
+    mon_segment = ntile(monetary, 3)
+  )
+
+# Overall segment (simple sum, can be weighted for more detail)
+rfm_table <- rfm_table %>%
+  mutate(
+    segment_score = freq_segment + rec_segment + mon_segment,
+    segment = case_when(
+      segment_score >= 7 ~ "Top Tier",
+      segment_score >= 5 ~ "Middle",
+      TRUE ~ "Low"
+    )
+  )
+
+rfm_table %>% count(segment)
+```
+
+## 7. Visualize Segmentation
+
+```{r}
+ggplot(rfm_table, aes(x = frequency, y = monetary, color = segment)) +
+  geom_point(size=3, alpha=0.7) +
+  labs(title="Customer Segmentation by Frequency & Value", x="Purchases per Month", y="Total Amount")
+
+ggplot(rfm_table, aes(x = recency, fill = segment)) +
+  geom_histogram(binwidth=10, position="dodge") +
+  labs(title="Recency Distribution by Segment", x="Days Since Last Purchase", y="Count")
+```
+
+## 8. Top, Middle, and Low Tier Customers
+
+```{r}
+top_customers <- rfm_table %>% filter(segment == "Top Tier") %>% arrange(desc(monetary))
+middle_customers <- rfm_table %>% filter(segment == "Middle") %>% arrange(desc(monetary))
+low_customers <- rfm_table %>% filter(segment == "Low") %>% arrange(desc(monetary))
+
+# Show top 5 from each
+top_customers %>% select(customer_id, customer_name, frequency, recency, monetary) %>% head() %>% kable()
+middle_customers %>% select(customer_id, customer_name, frequency, recency, monetary) %>% head() %>% kable()
+low_customers %>% select(customer_id, customer_name, frequency, recency, monetary) %>% head() %>% kable()
+```
+
+## 9. Conclusion
+
+- This report simulates member customer purchasing patterns and performs RFM segmentation.
+- "Top Tier" customers buy frequently, recently, and spend the most.
+- "Middle" customers are moderate in those metrics.
+- "Low" customers are infrequent, haven't bought recently, and spend little.
+- Results can be used for targeted marketing, loyalty programs, and retention strategies.
+
+---
