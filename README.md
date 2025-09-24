@@ -22,17 +22,13 @@ I am passionate about leveraging modern data architectures to solve complex prob
 
 ## Projects
 
-### [Retail Customer Segmentation](#)
+### [Retail Customer Segmentation](#https://github.com/JoWinatha96/Porto/blob/main/customerclustering.rmd)
 - **Tools:** R, SQL, PowerBI
 - Built an exploratory data analysis for customer segmentation based on Recency, Frequency and Monetary values.
 
-### [Membership Churn Prediction](#)
+### [Market Basket Analysis](#https://github.com/JoWinatha96/Porto/blob/main/market_basket.rmd)
 - **Tools:** R, pandas, matplotlib
-- Created a churn model that identified at-risk members with 85% accuracy.
-
-### [Inventory and Shelf Optimization Pipeline](#)
-- **Tools:** R, AWS Lambda
-- Automated ETL and optimized inventory placement in 100+ stores.
+- Created a market basket analysis to help bundling products and store allocation.
 
 
 ## Experience
