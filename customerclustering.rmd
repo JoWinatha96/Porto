@@ -1,0 +1,227 @@
+title: "Membership Clustering and RFM Analysis" author: "Your Name" date: "r Sys.Date()" output: html_document: toc: true toc_depth: 3 toc_float: true code_folding: hide
+# This R Markdown report analyzes member transaction data to perform RFM analysis and customer clustering.
+# The code simulates data extraction from a SQL database and follows the requested steps for data processing and analysis.
+
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+
+# --- Library Loading ---
+# Load all necessary packages for data manipulation, visualization, and clustering.
+# The DBI and RODBC packages are used for connecting to SQL databases.
+# Make sure to install them with install.packages("DBI") and install.packages("RODBC") if needed.
+library(DBI)
+library(odbc)
+library(dplyr)
+library(lubridate)
+library(ggplot2)
+library(cluster)    # For k-means clustering
+library(factoextra) # For visualizing clusters
+library(tidyr)
+library(stringr)
+
+# --- Data Simulation ---
+# Since we don't have a live database, we'll create some sample data to work with.
+# This simulates the data we would pull from the Transaction, Members, and Products tables.
+
+# Sample Members Table
+members_tbl <- tibble(
+  member_id = c(101, 102, 103, 104, 105, 106),
+  member_name = c("Alice", "Bob", "Charlie", "David", "Eve", "Frank"),
+  join_date = as.Date(c("2022-01-15", "2021-05-20", "2023-03-10", "2022-11-01", "2023-08-25", "2024-02-10"))
+)
+
+# Sample Products Table
+products_tbl <- tibble(
+  product_id = c(1, 2, 3, 4, 5),
+  product_name = c("Milk", "Bread", "Eggs", "Cereal", "Coffee"),
+  category = c("Dairy", "Bakery", "Dairy", "Pantry", "Pantry"),
+  unit_price = c(3.50, 2.00, 4.00, 5.50, 8.75)
+)
+
+# Sample Transactions Table
+transactions_tbl <- tibble(
+  receipt_id = c("R001", "R001", "R002", "R003", "R003", "R004", "R005", "R005", "R006", "R007"),
+  transaction_date = as.Date(c("2024-04-01", "2024-04-01", "2024-04-02", "2024-04-03", "2024-04-03", "2024-04-04", "2024-04-05", "2024-04-05", "2024-04-06", "2024-04-07")),
+  member_id = c(101, 101, NA, 102, 102, 103, NA, NA, 101, 104),
+  product_id = c(1, 2, 3, 4, 5, 1, 2, 3, 5, 4),
+  store_id = c("S1", "S1", "S2", "S1", "S1", "S3", "S2", "S2", "S1", "S3"),
+  quantity = c(2, 1, 3, 1, 1, 1, 2, 1, 1, 2)
+)
+
+# Combine transactions with product information to get unit prices
+transactions_full <- transactions_tbl %>%
+  left_join(products_tbl, by = "product_id") %>%
+  mutate(total_sales = quantity * unit_price)
+
+# Define a "today" date for recency calculation.
+today <- as.Date("2024-04-10")
+
+
+1. & 2. Get and Filter Transaction Data
+# --- SQL Connection Simulation ---
+# In a real-world scenario, you would connect to a database here.
+# We'll use our simulated data instead for this report.
+
+# Filter transactions to only include those with a member_id
+member_transactions <- transactions_full %>%
+  filter(!is.na(member_id))
+
+
+3. Join with Member Data
+# Now we join the filtered transaction data with the full member table to get
+# member details. This is crucial for linking transactions back to specific members.
+member_transactions_joined <- member_transactions %>%
+  left_join(members_tbl, by = "member_id")
+
+# Display the first few rows of the joined data to verify
+head(member_transactions_joined)
+
+
+4. Summarize Member Historical Purchasing
+# Summarize the transactions to create a single row for each receipt and member,
+# with the total sales value.
+member_purchase_summary <- member_transactions_joined %>%
+  group_by(member_id, member_name, receipt_id, transaction_date) %>%
+  summarise(
+    total_purchase_per_receipt = sum(total_sales)
+  ) %>%
+  ungroup()
+
+# Display the summarized data
+head(member_purchase_summary)
+
+
+6. Exploratory Data Analysis (EDA)
+Member vs. Non-Member Transactions
+# First, let's categorize transactions as 'Member' or 'Non-Member'
+transaction_groups <- transactions_full %>%
+  mutate(customer_type = ifelse(is.na(member_id), "Non-Member", "Member"))
+
+# Calculate transaction count and total sales for each group
+eda_summary <- transaction_groups %>%
+  group_by(customer_type) %>%
+  summarise(
+    transaction_count = n(),
+    total_sales_sum = sum(total_sales)
+  )
+
+# Plot the total sales comparison
+ggplot(eda_summary, aes(x = customer_type, y = total_sales_sum, fill = customer_type)) +
+  geom_bar(stat = "identity") +
+  geom_text(aes(label = scales::comma(total_sales_sum, accuracy = 0.01)), vjust = -0.5) +
+  labs(
+    title = "Total Sales by Customer Type",
+    x = "Customer Type",
+    y = "Total Sales",
+    fill = "Customer Type"
+  ) +
+  theme_minimal() +
+  scale_y_continuous(labels = scales::comma) +
+  theme(plot.title = element_text(hjust = 0.5))
+
+
+Most Popular Days and Stores
+# What are the busiest days for transactions?
+transactions_full %>%
+  mutate(day_of_week = wday(transaction_date, label = TRUE, abbr = FALSE)) %>%
+  group_by(day_of_week) %>%
+  summarise(transaction_count = n()) %>%
+  ggplot(aes(x = day_of_week, y = transaction_count, fill = day_of_week)) +
+  geom_bar(stat = "identity") +
+  geom_text(aes(label = transaction_count), vjust = -0.5) +
+  labs(
+    title = "Transaction Count by Day of the Week",
+    x = "Day of the Week",
+    y = "Number of Transactions",
+    fill = "Day"
+  ) +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5))
+
+# What is the sales distribution across stores for members?
+member_transactions_joined %>%
+  group_by(store_id) %>%
+  summarise(total_sales = sum(total_sales)) %>%
+  ggplot(aes(x = reorder(store_id, -total_sales), y = total_sales, fill = store_id)) +
+  geom_bar(stat = "identity") +
+  geom_text(aes(label = scales::comma(total_sales, accuracy = 0.01)), vjust = -0.5) +
+  labs(
+    title = "Member Sales by Store Location",
+    x = "Store ID",
+    y = "Total Sales"
+  ) +
+  theme_minimal() +
+  scale_y_continuous(labels = scales::comma) +
+  theme(plot.title = element_text(hjust = 0.5))
+
+
+7. Create RFM (Recency, Frequency, Monetary) Values
+# Calculate Recency, Frequency, and Monetary values for each member.
+rfm_data <- member_purchase_summary %>%
+  group_by(member_id) %>%
+  summarise(
+    recency_days = as.numeric(today - max(transaction_date)),
+    frequency_count = n_distinct(receipt_id),
+    monetary_value = sum(total_purchase_per_receipt)
+  ) %>%
+  ungroup()
+
+# Display the RFM table
+head(rfm_data)
+
+
+5. & 7. Clustering Based on RFM Values
+Preparing the Data for Clustering
+It's critical to scale the data so that no single variable (like monetary_value) dominates the clustering algorithm due to its large range.
+The scale() function standardizes the data to have a mean of 0 and a standard deviation of 1.
+# Select only the RFM numeric columns and scale them
+rfm_scaled <- rfm_data %>%
+  select(recency_days, frequency_count, monetary_value) %>%
+  scale()
+
+# View the scaled data
+head(rfm_scaled)
+
+
+Determining the Optimal Number of Clusters (k)
+The Elbow Method is a popular heuristic to find the ideal number of clusters.
+We plot the total within-cluster sum of squares (WSS) against the number of clusters (k).
+The "elbow" of the curve, where the rate of decrease slows down, indicates the optimal k.
+# The fviz_nbclust function from the factoextra package automates this process.
+# We're looking for the "elbow" where the bend in the line occurs.
+fviz_nbclust(rfm_scaled, kmeans, method = "wss") +
+  labs(subtitle = "Elbow Method")
+
+
+Running the K-Means Clustering Algorithm
+Based on the Elbow Method, we can choose the number of clusters.
+The kmeans() function is used to perform the clustering.
+centers = 5 tells the algorithm to create 5 clusters.
+nstart = 25 runs the algorithm 25 times with different random starting points and chooses the best result, which helps avoid local minima.
+# Set a seed for reproducibility so the results are the same each time.
+set.seed(123)
+kmeans_model <- kmeans(rfm_scaled, centers = 5, nstart = 25)
+
+# Add the cluster assignments back to the original RFM data frame
+rfm_data$cluster <- as.factor(kmeans_model$cluster)
+
+# View the RFM data with the new cluster assignments
+head(rfm_data)
+
+
+Characterizing the Clusters
+To understand what each cluster means, we summarize the average RFM values for each group.
+This step allows us to give a human-friendly label to each cluster (e.g., "High-Value Shoppers" or "New Customers").
+cluster_summary <- rfm_data %>%
+  group_by(cluster) %>%
+  summarise(
+    avg_recency = mean(recency_days),
+    avg_frequency = mean(frequency_count),
+    avg_monetary = mean(monetary_value)
+  )
+
+# Print the summary table
+print(cluster_summary)
+
+
+Report Summary
+This report provides a clear, documented process for analyzing member data, from initial SQL data pulls to advanced customer segmentation. The RFM analysis gives a quantitative view of customer value, and the subsequent clustering provides actionable segments that can be used for targeted marketing campaigns, loyalty program adjustments, or personalized offers. You now have a solid foundation to build on.
